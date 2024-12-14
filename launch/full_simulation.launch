@@ -1,32 +1,27 @@
 <launch>
     <!-- Launch Gazebo with the maze world -->
     <include file="$(find mir_gazebo)/launch/mir_maze_world.launch" />
-    
+
+    <!-- MiR 100 in Gazebo -->
+    <arg name="mir_type" default="mir_100" />
+
     <!-- Unpause Gazebo physics -->
     <node pkg="gazebo_ros" type="spawn_model" name="unpause_physics" output="screen">
         <param name="unpause" value="true" />
     </node>
 
-    <!-- Localization (AMCL or fake localization) -->
-    <!-- Uncomment one of the following options -->
-    
+    <!-- Localization -->
+
     <node pkg="explore_lite" type="explore" name="explore" output="screen">
-    	<param name="explore_costmap" value="true" />
+        <param name="explore_costmap" value="true" />
     </node>
 
-    <!-- Option 1: AMCL -->
+    <!-- Adaptive Monte Carlo Localization (AMCL) - used in robotics for determining the robot's position and orientation (pose) relative to a known map  -->
     <include file="$(find mir_navigation)/launch/amcl.launch">
         <arg name="initial_pose_x" value="10.0" />
         <arg name="initial_pose_y" value="10.0" />
     </include>
 
-    <!-- Option 2: Fake Localization -->
-    <!--
-    <include file="$(find mir_gazebo)/launch/fake_localization.launch">
-        <arg name="delta_x" value="-10.0" />
-        <arg name="delta_y" value="-10.0" />
-    </include>
-    -->
 
     <!-- Navigation -->
     <include file="$(find mir_navigation)/launch/start_planner.launch">
