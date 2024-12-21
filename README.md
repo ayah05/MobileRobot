@@ -1,5 +1,74 @@
 # Project 1: Learning the Kinematic Model of a Mobile Robot
 
+# Setup Docker using FHTW Docker Container
+## Initial Setup
+- [Docker Container Link](https://github.com/TW-Robotics/Docker-ROS/tree/master)
+- clone repository
+- start docker container using steps as described in the repository README - below shorter explanation
+- start XLaunch as seen in the FHTW Repository
+- run `run_docker_from_hub.bat` - should download and setup everything necessary and then you can already get started 
+- catkin_ws is already setup automatically
+- everything inside the docker container inside `catkin_ws/src/fhtw` is mounted / can be found under `catkin_ws/src/` in your file explorer
+
+- Install the required packages inside `catkin_ws/src`: 
+```
+apt update
+apt install python3-catkin-tools
+catkin_create_pkg project1 sensor_msgs nav_msgs
+```
+- Now, navigate to `/project1` and then create the following dirs:
+```
+mkdir src
+mkdir launch
+mkdir maps
+mkdir param
+```
+- go back to `/catkin_ws` and run:
+```
+catkin init 
+catkin_make
+``` 
+
+- Test the Setup:
+```
+rospack list
+```
+- Install Vim:
+```
+apt update
+apt install vim -y
+```
+- Install Gazebo:
+```
+apt update
+apt install gazebo11 -y
+gazebo --version
+```
+## Download the Required Dependencies to Start the Mir-Robot 100 
+- To download the required packages for the robot run:
+```
+sudo apt install ros-noetic-mir-robot
+```
+- Copy the contents of `full_simulation.launch` file from this repository to `catkin_ws/src/project1/launch` via vim or however you want to:
+```
+vim full_simulation.launch
+```
+--> paste the new contents into the file
+--> now click (Esc+P) and then Esc again and then write `:wq` to save and quit the file
+```
+- Now we need to run inside of one terminal inside of the docker container the following cmd: 
+```
+roscore
+```
+- Inside of another terminal, also inside of the docker container, run:
+```
+roslaunch project1 full_simulation.launch 
+```
+- Now inside of the Gazebo Window (at the bottom), you need to start the simulation and then open the rViz Window to see where the robot is positioned and open the Robot Steering Window to move the robot.
+```
+
+
+# Setup Docker from Scratch
 ## Initial Setup
 
 - First, pull the noetic image: `docker pull ros:noetic`
