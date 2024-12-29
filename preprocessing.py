@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 import torch
 
 # function to load data from csv
@@ -55,9 +54,7 @@ def clean_data(data, timestep_interval):
     # create a complete timeline without any missing timestamp
     min_time = data['timestamp'].min()
     max_time = data['timestamp'].max()
-    #complete_timeline = np.arange(min_time, max_time, timestep_interval)
     complete_timeline = pd.date_range(start=min_time, end=max_time, freq=f'{timestep_interval}S')
-
     
     # reindex data to match the complete timeline
     data = data.set_index('timestamp')
@@ -92,6 +89,7 @@ def quaternion_to_euler(w, x, y, z):
     return roll_x, pitch_y, yaw_z
     
 
+# function to generate state-action-sequences
 def generate_state_action_sequences(data, sequence_length, output_size):
     """
     generate sequences of state-action pairs
@@ -155,6 +153,31 @@ def save_data(train_states, val_states, test_states, train_actions, val_actions,
 
 # Data Preprocessing Main Function
 def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_interval=1, sequence_length=10, output_size=1, val_size=0.1, test_size=0.2):
+    """
+    preprocesses motion data from a CSV file, including cleaning, interpolation, 
+    formatting into state-action sequences, and splitting into train, validation, and test datasets. 
+    The datasets can be saved as .pt files or .csv files.
+
+    Parameters
+    ----------
+    input_file : str
+        path to the input CSV file containing raw motion data
+    output_directory : str
+        directory where the preprocessed datasets will be saved
+    save_as_pt : bool, optional
+        whether to save the datasets as .pt files for PyTorch, by default False - then the file is saved as CSV
+    timestep_interval : int, optional
+        interval (in seconds) for ensuring consistent timestamps in the data, by default 1
+    sequence_length : int, optional
+        number of timesteps to include in each input sequence, by default 10.
+    output_size : int, optional
+        number of timesteps to predict for each output sequence, by default 1.
+    val_size : float, optional
+        proportion of the data to use for validation, by default 0.1.
+    test_size : float, optional
+        proportion of the data to use for testing, by default 0.2.
+    """
+    
     raw_data = load_data('/raw_data/mir100_sample_data.csv', delimiter=",", decimal='.')
     cleaned_data = clean_data(raw_data, timestep_interval=timestep_interval)
     states, actions = generate_state_action_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
@@ -163,6 +186,6 @@ def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_in
 
 
 # test-drive the execution
-preprocess_data("input.csv", output_directory="preprocessed_data/", save_as_pt=True, timestep_interval=1, sequence_length=10, output_size=1, val_size=0.1, test_size=0.2)
+preprocess_data("input.csv", output_directory="preprocessed_data/", save_as_pt=True, timestep_interval=1, sequence_length=5, output_size=1, val_size=0.1, test_size=0.2)
     
     
