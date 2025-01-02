@@ -53,8 +53,11 @@ sudo apt install ros-noetic-mir-robot
 ```
 vim full_simulation.launch
 ```
+
 --> paste the new contents into the file
 --> now click (Esc+P) and then Esc again and then write `:wq` to save and quit the file
+
+-  Copy the `position_logger.py` file from this repository to `catkin_ws/src/project1/src`
 ```
 - Now we need to run inside of one terminal inside of the docker container the following cmd: 
 ```
