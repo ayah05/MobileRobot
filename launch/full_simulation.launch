@@ -37,4 +37,8 @@
         <param name="robot_name" value="mir" />
         <param name="output_file" value="$(find project1)/position_data/position_log.csv" />
     </node>
+
+        <!-- pattern drive -->
+    <node pkg="project1" type="pattern_drive.py" name="pattern_drive" output="screen">
+    </node>
 </launch>
