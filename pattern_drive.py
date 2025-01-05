@@ -7,14 +7,14 @@ import time
 class PatternDriver:
     def __init__(self):
         rospy.init_node('pattern_driver', anonymous=True)
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.odom = rospy.Publisher('/odom', Twist, queue_size=10)
         self.rate = rospy.Rate(10)  # 10 Hz
         self.speeds = [0.2, 0.4, 0.6]  # Varying speeds
 
     def stop_robot(self):
         """Stop the robot."""
         stop = Twist()
-        self.cmd_vel_pub.publish(stop)
+        self.odom.publish(stop)
         rospy.loginfo("Robot stopped")
         time.sleep(1)
 
@@ -25,7 +25,7 @@ class PatternDriver:
         twist.linear.x = speed
         twist.angular.z = -speed if clockwise else speed  # Negative angular speed for clockwise
         for _ in range(100):  # Approx. 10 seconds at 10 Hz
-            self.cmd_vel_pub.publish(twist)
+            self.odom.publish(twist)
             self.rate.sleep()
         self.stop_robot()
 
@@ -45,28 +45,28 @@ class PatternDriver:
                 twist.linear.x = speed
                 twist.angular.z = 0
                 for _ in range(50):  # Drive straight for 5 seconds
-                    self.cmd_vel_pub.publish(twist)
+                    self.odom.publish(twist)
                     self.rate.sleep()
 
                 # Turn 90 degrees
                 twist.linear.x = 0
                 twist.angular.z = -0.5 if clockwise else 0.5
                 for _ in range(20):  # Approx. 2 seconds to turn 90 degrees
-                    self.cmd_vel_pub.publish(twist)
+                    self.odom.publish(twist)
                     self.rate.sleep()
 
             for _ in range(2):  # Two short sides
                 twist.linear.x = speed
                 twist.angular.z = 0
                 for _ in range(25):  # Drive straight for 2.5 seconds
-                    self.cmd_vel_pub.publish(twist)
+                    self.odom.publish(twist)
                     self.rate.sleep()
 
                 # Turn 90 degrees
                 twist.linear.x = 0
                 twist.angular.z = -0.5 if clockwise else 0.5
                 for _ in range(20):  # Approx. 2 seconds to turn 90 degrees
-                    self.cmd_vel_pub.publish(twist)
+                    self.odom.publish(twist)
                     self.rate.sleep()
 
         self.stop_robot()
