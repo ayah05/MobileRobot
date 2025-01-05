@@ -1,21 +1,31 @@
 import pandas as pd
 import numpy as np
 import torch
+import os
 
 # function to load data from csv
 def load_data(input_file, delimiter=',', decimal='.'):
     """
     load robot motion data from a csv file generated using ROS
     """
+    # get the directory of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # specify the relative path to the file
+    relative_path = input_file
+
+    # combine to get the full path
+    full_path = os.path.join(current_dir, relative_path)
+
     try:
-        raw_data = pd.read_csv('raw_data/mir100_sample_data.csv', delimiter=delimiter, decimal=decimal)
+        raw_data = pd.read_csv(full_path, delimiter=delimiter, decimal=decimal)
         return raw_data
     except Exception as e:
         raise ValueError(f"Error loading file: {e}")
 
 
 # function to clean and preprocess data
-def clean_data(data, timestep_interval):
+def clean_data(data, timestep_interval=0.025):
     """
     clean the data by removing outliers and by interpolating missing values
     
@@ -32,39 +42,42 @@ def clean_data(data, timestep_interval):
         numpy array of cleaned data
     """
 
-    
     len_before = len(data)
 
     # remove rows with extreme velocities
     linear_velocity_threshold = 1.5  # m/s, threshold for outlier removal (according to MiR100 datasheet)
-    cleaned_data = data[(data['linear_velocity'] <= linear_velocity_threshold)]
+    cleaned_data = data[(data['linear_velocity_x'] <= linear_velocity_threshold)]
     
     # remove rows with extreme angular velocities
-    mean_value = data['angular_velocity'].mean()
-    std_value = data['angular_velocity'].std()
-    data = data[(data['angular_velocity'] >= mean_value - 3 * std_value) & (data['angular_velocity'] <= mean_value + 3 * std_value)]
+    mean_value = data['angular_velocity_z'].mean()
+    std_value = data['angular_velocity_z'].std()
+    data = data[(data['angular_velocity_z'] >= mean_value - 3 * std_value) & (data['angular_velocity_z'] <= mean_value + 3 * std_value)]
     
     len_after = len(data)
     removed_lines = len_before - len_after
     print(removed_lines, "outlier lines were removed")
-    
-    data['timestamp'] = pd.to_datetime(data['timestamp']) # convert timestamp column to datetime format
-    data = data.sort_values(by='timestamp').reset_index(drop=True) # ensure timestamps are sorted
-    
-    # create a complete timeline without any missing timestamp
-    min_time = data['timestamp'].min()
-    max_time = data['timestamp'].max()
-    complete_timeline = pd.date_range(start=min_time, end=max_time, freq=f'{timestep_interval}S')
-    
-    # reindex data to match the complete timeline
-    data = data.set_index('timestamp')
-    data = data.reindex(complete_timeline, method=None) # this will insert NaN values for missing timestamps
-    data.index.name = 'timestamp'  # ensure index remains labeled as 'timestamp'
 
-    # interpolate missing values and make the timestamp column a normal column again
-    data = data.interpolate(method='linear', limit_direction='both').reset_index()
+    # removed as there are some small oscillations in the frequency of ROS messages
     
+    # data['timestamp'] = pd.to_datetime(data['timestamp'], unit='s') # convert timestamp column to datetime format
+    # data = data.sort_values(by='timestamp').reset_index(drop=True) # ensure timestamps are sorted
+    
+    # # create a complete timeline without any missing timestamp
+    # min_time = data['timestamp'].min()
+    # max_time = data['timestamp'].max()
+    # complete_timeline = pd.date_range(start=min_time, end=max_time, freq=f'{timestep_interval}S')
+    
+    # # reindex data to match the complete timeline
+    # data = data.set_index('timestamp')
+    # data = data.reindex(complete_timeline, method=None) # this will insert NaN values for missing timestamps
+    # data.index.name = 'timestamp'  # ensure index remains labeled as 'timestamp'
 
+    # # interpolate missing values and make the timestamp column a normal column again
+    # data = data.interpolate(method='linear', limit_direction='both').reset_index()
+
+
+    cleaned_data = data
+    
     return cleaned_data
 
 
@@ -101,10 +114,10 @@ def generate_state_action_sequences(data, sequence_length, output_size):
                                                                                             row['orientation_x'],
                                                                                             row['orientation_y'],
                                                                                             row['orientation_z']), axis=1))
-    states = data[['position_x', 'position_y', 'roll', 'pitch', 'yaw']].values
+    states = data[['x', 'y', 'roll', 'pitch', 'yaw']].values
 
     # Action: linear and angular velocities
-    actions = data[['linear_velocity', 'angular_velocity']].values
+    actions = data[['linear_velocity_x', 'angular_velocity_z']].values
 
     # Create sequences
     state_sequences = []
@@ -137,22 +150,32 @@ def split_data(states, actions, val_size=0.1, test_size=0.2):
 
 
 # function to save the preprocessed data for later use by the ML model
-def save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=True):
+def save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=True, delimiter=",", decimal="."):
     """
     save the datasets in PyTorch's pt format, or csv, respectively
     """
+
+    # get the directory of the current script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # specify the relative path to the file
+    relative_path = output_directory
+
+    # combine to get the full path
+    full_path = os.path.join(current_dir, relative_path)
+
     if save_as_pt:
-        torch.save({'states': train_states, 'actions': train_actions}, f'{output_directory}/train.pt')
-        torch.save({'states': val_states, 'actions': val_actions}, f'{output_directory}/val.pt')
-        torch.save({'states': test_states, 'actions': test_actions}, f'{output_directory}/test.pt')
+        torch.save({'states': train_states, 'actions': train_actions}, f'{full_path}/train.pt')
+        torch.save({'states': val_states, 'actions': val_actions}, f'{full_path}/val.pt')
+        torch.save({'states': test_states, 'actions': test_actions}, f'{full_path}/test.pt')
     else:
-        pd.DataFrame({'states': list(train_states), 'actions': list(train_actions)}).to_csv(f'{output_directory}/train.csv', index=False)
-        pd.DataFrame({'states': list(val_states), 'actions': list(val_actions)}).to_csv(f'{output_directory}/val.csv', index=False)
-        pd.DataFrame({'states': list(test_states), 'actions': list(test_actions)}).to_csv(f'{output_directory}/test.csv', index=False)    
+        pd.DataFrame({'states': list(train_states), 'actions': list(train_actions)}).to_csv(f'{full_path}/train.csv', index=False, sep=delimiter, decimal=decimal)
+        pd.DataFrame({'states': list(val_states), 'actions': list(val_actions)}).to_csv(f'{full_path}/val.csv', index=False, sep=delimiter, decimal=decimal)
+        pd.DataFrame({'states': list(test_states), 'actions': list(test_actions)}).to_csv(f'{full_path}/test.csv', index=False, sep=delimiter, decimal=decimal)    
 
 
 # Data Preprocessing Main Function
-def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_interval=1, sequence_length=10, output_size=1, val_size=0.1, test_size=0.2):
+def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_interval=0.025, sequence_length=10, output_size=1, val_size=0.1, test_size=0.2):
     """
     preprocesses motion data from a CSV file, including cleaning, interpolation, 
     formatting into state-action sequences, and splitting into train, validation, and test datasets. 
@@ -178,14 +201,14 @@ def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_in
         proportion of the data to use for testing, by default 0.2.
     """
     
-    raw_data = load_data('/raw_data/mir100_sample_data.csv', delimiter=",", decimal='.')
+    raw_data = load_data(input_file, delimiter=",", decimal=".")
     cleaned_data = clean_data(raw_data, timestep_interval=timestep_interval)
     states, actions = generate_state_action_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
     train_states, val_states, test_states, train_actions, val_actions, test_actions = split_data(states, actions, val_size=val_size, test_size=test_size)
-    save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=save_as_pt)
+    save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
 
 
 # test-drive the execution
-preprocess_data("input.csv", output_directory="preprocessed_data/", save_as_pt=True, timestep_interval=1, sequence_length=5, output_size=1, val_size=0.1, test_size=0.2)
+preprocess_data(input_file="raw_data/position_log.csv", output_directory="preprocessed_data/", save_as_pt=True, timestep_interval=0.025, sequence_length=5, output_size=1, val_size=0.1, test_size=0.2)
     
     
