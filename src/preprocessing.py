@@ -129,6 +129,29 @@ def generate_state_action_sequences(data, sequence_length, output_size):
 
     return np.array(state_sequences), np.array(action_sequences)
 
+# function to generate sequences of features and targets
+def generate_feature_target_sequences(data, sequence_length, output_size):
+    """
+    generate sequences of features and targets
+    the first element in a sequence represents the earliest timestep in the sequence,
+    the last element in a sequence represents the most recent timestep in the sequence.
+    """
+    # features
+    features = data[['x', 'y', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w', 'linear_velocity_x', 'angular_velocity_z']].values
+
+    # targets
+    targets = data[['x', 'y', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w']].values
+
+    # Create sequences
+    feature_sequences = []
+    target_sequences = []
+
+    for i in range(len(features) - sequence_length - output_size + 1):
+        feature_sequences.append(features[i:i + sequence_length])
+        target_sequences.append(targets[i + sequence_length:i + sequence_length + output_size])
+
+    return np.array(feature_sequences), np.array(target_sequences)
+
 
 # function to split data into training, validation and test datasets
 def split_data(states, actions, val_size=0.1, test_size=0.2):
@@ -203,9 +226,12 @@ def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_in
     
     raw_data = load_data(input_file, delimiter=",", decimal=".")
     cleaned_data = clean_data(raw_data, timestep_interval=timestep_interval)
-    states, actions = generate_state_action_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
-    train_states, val_states, test_states, train_actions, val_actions, test_actions = split_data(states, actions, val_size=val_size, test_size=test_size)
-    save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
+    # states, actions = generate_state_action_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
+    # train_states, val_states, test_states, train_actions, val_actions, test_actions = split_data(states, actions, val_size=val_size, test_size=test_size)
+    # save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
+    features, targets = generate_feature_target_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
+    train_features, val_features, test_features, train_targets, val_targets, test_targets = split_data(features, targets, val_size=val_size, test_size=test_size)
+    save_data(train_features, val_features, test_features, train_targets, val_targets, test_targets, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
 
 
 # test-drive the execution
