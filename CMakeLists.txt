@@ -10,8 +10,10 @@ project(project1)
 find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   sensor_msgs
-  std_msgs
-)
+  rospy
+  message_generation 
+ )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -70,7 +72,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   nav_msgs#   sensor_msgs#   std_msgs
+#   nav_msgs#   sensor_msgs
 # )
 
 ################################################
@@ -105,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project1
-#  CATKIN_DEPENDS nav_msgs sensor_msgs std_msgs
+#  CATKIN_DEPENDS nav_msgs sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -159,10 +161,12 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ catkin_install_python(PROGRAMS
+   scripts/position_logger.py
+   scripts/pattern_driver.py
+   scripts/path_follower.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
