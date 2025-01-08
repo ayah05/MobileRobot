@@ -1,0 +1,33 @@
+<launch>
+    <!-- Unpause Gazebo physics
+    <node pkg="gazebo_ros" type="spawn_model" name="unpause_physics" output="screen">
+        <param name="unpause" value="true" />
+    </node> -->
+
+    <!-- Localization -->
+    <include file="$(find mir_navigation)/launch/amcl.launch">
+        <arg name="initial_pose_x" value="10.0" />
+        <arg name="initial_pose_y" value="10.0" />
+    </include>
+
+    <!-- Navigation -->
+    <include file="$(find mir_navigation)/launch/start_planner.launch">
+        <arg name="map_file" value="$(find mir_gazebo)/maps/maze.yaml" /> 
+    </include>
+
+    <!-- Position Logger -->
+    <node pkg="project1" type="position_logger.py" name="position_logger" output="screen">
+        <param name="robot_name" value="mir" />
+        <param name="output_file" value="$(find project1)/position_data/position_log.csv" />
+    </node>
+
+    <!-- Pattern Drive
+   <node pkg="project1" type="$(find project1)/scripts/pattern_driver.py" name="pattern_driver" output="screen" />
+ -->
+    <!-- Node for the path follower -->
+    <node pkg="project1" type="$(find project1)/scripts/path_follower.py" name="path_follower" output="screen">
+        <!-- Pass routes as parameters -->
+ 	 <param name="routes" value="[[[1.0, 1.0],[2.0, 2.0]],[[3.0, 3.0],[4.0, 4.0]]]" />
+  
+   </node>
+</launch>
