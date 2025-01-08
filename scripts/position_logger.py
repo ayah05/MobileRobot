@@ -3,6 +3,7 @@ import rospy
 import csv
 from gazebo_msgs.msg import ModelStates
 
+
 class PositionLogger:
     def __init__(self):
         rospy.init_node('position_logger', anonymous=True)
@@ -15,12 +16,12 @@ class PositionLogger:
         # Ensure the output directory exists
         import os
         os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
-        
+
         # Open CSV file for logging
         self.csv_file = open(self.output_file, 'w')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(['timestamp', 'x', 'y', 'z', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w'])
-        
+
         rospy.Subscriber('/gazebo/model_states', ModelStates, self.callback)
         rospy.loginfo(f"Logging position data for {self.robot_name} to {self.output_file}")
 
@@ -32,11 +33,14 @@ class PositionLogger:
             orientation = pose.orientation
 
             # Write position and orientation data to CSV
-            self.csv_writer.writerow([
-                round(rospy.Time.now().to_sec(), 3),
-                round(position.x, 3), round(position.y, 3), round(position.z, 3),
-                round(orientation.x, 3), round(orientation.y, 3), round(orientation.z, 3), round(orientation.w, 3)
-            ])
+            epsilon = 1e-9
+            if abs((rospy.Time.now().to_sec() % 0.05)) < epsilon:
+                self.csv_writer.writerow([
+                    round(rospy.Time.now().to_sec(), 3),
+                    round(position.x, 3), round(position.y, 3), round(position.z, 3),
+                    round(orientation.x, 3), round(orientation.y, 3), round(orientation.z, 3), round(orientation.w, 3)
+                ])
+
         except ValueError:
             rospy.logwarn(f"Robot {self.robot_name} not found in ModelStates!")
 
@@ -44,9 +48,11 @@ class PositionLogger:
         rospy.spin()
         self.csv_file.close()
 
+
 if __name__ == '__main__':
     logger = PositionLogger()
     try:
         logger.run()
     except rospy.ROSInterruptException:
         pass
+

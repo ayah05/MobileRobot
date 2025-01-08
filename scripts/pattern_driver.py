@@ -1,92 +1,86 @@
 #!/usr/bin/env python
 import rospy
-from geometry_msgs.msg import Twist
-import time
+import math
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import actionlib
 
 
 class PatternDriver:
     def __init__(self):
         rospy.init_node('pattern_driver', anonymous=True)
-        self.odom = rospy.Publisher('/odom', Twist, queue_size=10)
-        self.rate = rospy.Rate(10)  # 10 Hz
-        self.speeds = [0.2, 0.4, 0.6]  # Varying speeds
 
-    def stop_robot(self):
-        """Stop the robot."""
-        stop = Twist()
-        self.odom.publish(stop)
-        rospy.loginfo("Robot stopped")
-        time.sleep(1)
+        # Initialize the move_base action client
+        self.move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        rospy.loginfo("Waiting for move_base action server...")
+        self.move_base_client.wait_for_server()
+        rospy.loginfo("Connected to move_base action server.")
 
-    def drive_circle(self, speed, clockwise):
-        """Drive the robot in a circle."""
-        rospy.loginfo(f"Driving a circle at speed {speed}, {'clockwise' if clockwise else 'counterclockwise'}")
-        twist = Twist()
-        twist.linear.x = speed
-        twist.angular.z = -speed if clockwise else speed  # Negative angular speed for clockwise
-        for _ in range(100):  # Approx. 10 seconds at 10 Hz
-            self.odom.publish(twist)
-            self.rate.sleep()
-        self.stop_robot()
+        # Define default parameters
+        self.speed = 0.5
+        self.radius = 1.0
 
-    def drive_figure_8(self, speed):
-        """Drive the robot in a figure-8."""
-        rospy.loginfo(f"Driving a figure-8 at speed {speed}")
-        self.drive_circle(speed, clockwise=False)  # First loop counterclockwise
-        self.drive_circle(speed, clockwise=True)   # Second loop clockwise
+    def send_goal(self, x, y, theta):
+        """Send a navigation goal to the move_base action server."""
+        rospy.loginfo(f"Sending goal to (x={x}, y={y}, theta={theta})")
 
-    def drive_rectangle(self, speed, clockwise):
-        """Drive the robot in a rectangle."""
-        rospy.loginfo(f"Driving a rectangle at speed {speed}, {'clockwise' if clockwise else 'counterclockwise'}")
-        twist = Twist()
+        # Create the goal
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
 
-        for _ in range(2):  # Two laps around the rectangle
-            for _ in range(2):  # Two long sides
-                twist.linear.x = speed
-                twist.angular.z = 0
-                for _ in range(50):  # Drive straight for 5 seconds
-                    self.odom.publish(twist)
-                    self.rate.sleep()
+        goal.target_pose.pose.position.x = x
+        goal.target_pose.pose.position.y = y
 
-                # Turn 90 degrees
-                twist.linear.x = 0
-                twist.angular.z = -0.5 if clockwise else 0.5
-                for _ in range(20):  # Approx. 2 seconds to turn 90 degrees
-                    self.odom.publish(twist)
-                    self.rate.sleep()
+        # Convert theta to quaternion
+        quaternion = self.theta_to_quaternion(theta)
+        goal.target_pose.pose.orientation.x = quaternion[0]
+        goal.target_pose.pose.orientation.y = quaternion[1]
+        goal.target_pose.pose.orientation.z = quaternion[2]
+        goal.target_pose.pose.orientation.w = quaternion[3]
 
-            for _ in range(2):  # Two short sides
-                twist.linear.x = speed
-                twist.angular.z = 0
-                for _ in range(25):  # Drive straight for 2.5 seconds
-                    self.odom.publish(twist)
-                    self.rate.sleep()
+        # Send the goal and wait for the result
+        self.move_base_client.send_goal(goal)
+        self.move_base_client.wait_for_result()
+        rospy.loginfo(f"Reached goal: (x={x}, y={y}, theta={theta})")
 
-                # Turn 90 degrees
-                twist.linear.x = 0
-                twist.angular.z = -0.5 if clockwise else 0.5
-                for _ in range(20):  # Approx. 2 seconds to turn 90 degrees
-                    self.odom.publish(twist)
-                    self.rate.sleep()
+    @staticmethod
+    def theta_to_quaternion(theta):
+        """Convert an angle (theta) to a quaternion."""
+        return [0.0, 0.0, math.sin(theta / 2.0), math.cos(theta / 2.0)]
 
-        self.stop_robot()
+    def drive_circle(self, clockwise):
+        """Drive in a circular pattern using move_base."""
+        rospy.loginfo(f"Driving a circle, {'clockwise' if clockwise else 'counterclockwise'}")
+        step = 0.5 if clockwise else -0.5
+        for angle in range(0, 360, 30):
+            theta = math.radians(angle)
+            x = self.radius * math.cos(theta)
+            y = self.radius * math.sin(theta)
+            self.send_goal(x, y, theta)
+
+    def drive_rectangle(self):
+        """Drive in a rectangular pattern."""
+        rospy.loginfo("Driving a rectangle")
+        rectangle_points = [
+            (1.0, 0.0, 0.0),  # Move forward
+            (1.0, 1.0, math.pi / 2),  # Turn 90 degrees and move up
+            (0.0, 1.0, math.pi),  # Turn 90 degrees and move backward
+            (0.0, 0.0, -math.pi / 2),  # Turn 90 degrees and return to start
+        ]
+        for point in rectangle_points:
+            self.send_goal(*point)
 
     def run_patterns(self):
-        """Run all patterns at varying speeds and in both directions."""
+        """Run all patterns."""
         try:
-            for speed in self.speeds:
-                self.drive_circle(speed, clockwise=False)
-                self.drive_circle(speed, clockwise=True)
-                self.drive_figure_8(speed)
-                self.drive_rectangle(speed, clockwise=False)
-                self.drive_rectangle(speed, clockwise=True)
+            self.drive_circle(clockwise=False)
+            self.drive_circle(clockwise=True)
+            self.drive_rectangle()
         except rospy.ROSInterruptException:
-            pass
-        finally:
-            self.stop_robot()
-            rospy.loginfo("Finished all patterns")
+            rospy.loginfo("Pattern driving interrupted")
 
 
 if __name__ == '__main__':
     driver = PatternDriver()
     driver.run_patterns()
+

@@ -1,6 +1,8 @@
+#!/usr/bin/env python
 import rospy
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 import actionlib
+
 
 class PathFollower:
     def __init__(self):
@@ -41,12 +43,6 @@ class PathFollower:
             return
 
         waypoint = current_route[self.current_waypoint_index]
-        if not isinstance(waypoint, list) or len(waypoint) != 2:
-            rospy.logerr(f"Invalid waypoint format: {waypoint}")
-            self.current_waypoint_index += 1
-            self.process_next_goal()
-            return
-
         rospy.loginfo(f"Sending goal: {waypoint}")
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
@@ -55,16 +51,37 @@ class PathFollower:
         goal.target_pose.pose.position.y = waypoint[1]
         goal.target_pose.pose.orientation.w = 1.0
 
+        # Cancel any active or pending goals to avoid conflicts
+        if self.move_base_client.get_state() in [
+            actionlib.GoalStatus.ACTIVE,
+            actionlib.GoalStatus.PENDING,
+        ]:
+            rospy.logwarn("Cancelling active/pending goal before sending a new one.")
+            self.move_base_client.cancel_all_goals()
+            rospy.sleep(1)  # Give some time for the cancellation to take effect
+
+        # Send the new goal
         self.move_base_client.send_goal(goal, done_cb=self.goal_done_cb)
 
     def goal_done_cb(self, status, result):
-        if status == 3:  # SUCCEEDED
+        """Callback for when a goal is completed."""
+        if status == actionlib.GoalStatus.SUCCEEDED:
             rospy.loginfo("Goal reached.")
             self.current_waypoint_index += 1
+            rospy.sleep(1)  # Short delay before processing the next goal
+            self.process_next_goal()
+        elif status in [actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.ABORTED]:
+            rospy.logwarn(f"Failed to reach goal. Status: {status}. Retrying...")
+            # Ensure all active/pending goals are cleared before retrying
+            self.move_base_client.cancel_all_goals()
+            rospy.sleep(1)
             self.process_next_goal()
         else:
-            rospy.logwarn(f"Failed to reach goal. Status: {status}. Retrying...")
+            rospy.logwarn(f"Unexpected status: {status}. Retrying...")
+            self.move_base_client.cancel_all_goals()
+            rospy.sleep(1)
             self.process_next_goal()
+
 
 if __name__ == "__main__":
     try:

@@ -12,7 +12,7 @@
 
     <!-- Navigation -->
     <include file="$(find mir_navigation)/launch/start_planner.launch">
-        <arg name="map_file" value="$(find mir_gazebo)/maps/maze.yaml" />
+        <arg name="map_file" value="$(find mir_gazebo)/maps/maze.yaml" /> 
     </include>
 
     <!-- Position Logger -->
@@ -23,9 +23,9 @@
 
     <!-- Pattern Drive -->
    <node pkg="project1" type="pattern_driver.py" name="pattern_driver" output="screen" />
-
+ 
     <!-- Node for the path follower -->
-    <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">
-         <param name="routes" value="[[[1.0, 1.0],[2.0, 2.0]],[[3.0, 3.0],[4.0, 4.0]]]" />
+    <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">   
+ 	 <param name="routes" value="[[[1.0, 1.0]]]" /> 
    </node>
 </launch>
