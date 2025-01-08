@@ -176,3 +176,28 @@ roscore
 roslaunch project1 full_simulation.launch 
 ```
 - Now inside of the Gazebo Window (at the bottom), you need to start the simulation and then open the rViz Window to see where the robot is positioned and open the Robot Steering Window to move the robot.
+
+# Ingest Robot Motion Data and Generate Sequences for LSTM model
+preprocessing.py offers a function **preprocess_data** that imports data from an input file and generates three output files that contain data sequences to be used by an LSTM model for training, validation, and test. The input file contains x, y, orientation_x, orientation_y, orientation_z and orientation_w.
+
+The function takes these major parameters:  
+
+```python
+"""
+input_file : str  
+    path to the input CSV file containing raw motion data  
+output_directory : str  
+  directory where the preprocessed datasets will be saved
+save_as_pt : bool, optional
+    whether to save the datasets as .pt files for PyTorch, by default False - then the file is saved as CSV
+sequence_length : int, optional
+    number of timesteps to include in each input sequence, by default 10.
+output_size : int, optional
+    number of timesteps to predict for each output sequence, by default 1.
+val_size : float, optional
+    proportion of the data to use for validation, by default 0.1.
+test_size : float, optional
+    proportion of the data to use for testing, by default 0.2.
+"""
+```
+You can save the generated sequence files either in PyTorch (.pt) or CSV format.
