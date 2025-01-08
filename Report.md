@@ -2,8 +2,32 @@
 
 For this task the MIR 100 Robot was loaded into a Gazebo World, with several nodes to enable autonomous exploration of the robot.
 
+## MIR 100 Robot Simulation in Gazebo
 
-### **Position Logging**
+This document provides instructions to simulate the MIR 100 robot in the `10by10_maze.world_1.xml` Gazebo environment.
+
+### Setup Overview
+
+- The simulation uses the `10by10_maze.world_1.xml` file in Gazebo.
+- Gazebo and RViz are combined into a single launch file.
+- Nodes are included in a separate launch file for modularity.
+
+### Steps to Start the Simulation
+
+1. ****Navigate to the Launch Directory****: Go to the directory containing the launch files.
+   ```bash
+   cd /CATKINWS/src/project1/launch
+2. ****Start the Simulation****: Run the provided script to initialize the simulation.
+   ```bash
+   ./start_simulation.sh
+3.  ****Set the Robot's Route****: Before starting the robot's path-following behavior, define a route by setting the appropriate ROS parameter.
+    ```bash
+    rosparam set /path_follower/routes "[[[1.0, 1.0]]]"
+4. ****Run the Path-Following Script****: Execute the Python script to activate the robot's path-following logic.
+   	```bash
+    rosrun project1 path_follower.py
+    
+## **Position Logging**
 
 The **Position Logger** is a custom ROS node (`position_logger.py`) that logs odometry data from the `/odom` topic to a CSV file. This node is critical for collecting motion data, which serves as the foundation for training the kinematic model.
 
