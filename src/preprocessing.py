@@ -24,67 +24,12 @@ def load_data(input_file, delimiter=',', decimal='.'):
         raise ValueError(f"Error loading file: {e}")
 
 
-# function to clean and preprocess data
-def clean_data(data, timestep_interval=0.025):
-    """
-    clean the data by removing outliers and by interpolating missing values
-    
-    Parameters
-    ----------
-    data : np array
-        raw mobile robot motion data
-    timestep_interval : float
-        interval between two timesteps in seconds
-
-    Returns
-    -------
-    np array
-        numpy array of cleaned data
-    """
-
-    len_before = len(data)
-
-    # remove rows with extreme velocities
-    linear_velocity_threshold = 1.5  # m/s, threshold for outlier removal (according to MiR100 datasheet)
-    cleaned_data = data[(data['linear_velocity_x'] <= linear_velocity_threshold)]
-    
-    # remove rows with extreme angular velocities
-    mean_value = data['angular_velocity_z'].mean()
-    std_value = data['angular_velocity_z'].std()
-    data = data[(data['angular_velocity_z'] >= mean_value - 3 * std_value) & (data['angular_velocity_z'] <= mean_value + 3 * std_value)]
-    
-    len_after = len(data)
-    removed_lines = len_before - len_after
-    print(removed_lines, "outlier lines were removed")
-
-    # removed as there are some small oscillations in the frequency of ROS messages
-    
-    # data['timestamp'] = pd.to_datetime(data['timestamp'], unit='s') # convert timestamp column to datetime format
-    # data = data.sort_values(by='timestamp').reset_index(drop=True) # ensure timestamps are sorted
-    
-    # # create a complete timeline without any missing timestamp
-    # min_time = data['timestamp'].min()
-    # max_time = data['timestamp'].max()
-    # complete_timeline = pd.date_range(start=min_time, end=max_time, freq=f'{timestep_interval}S')
-    
-    # # reindex data to match the complete timeline
-    # data = data.set_index('timestamp')
-    # data = data.reindex(complete_timeline, method=None) # this will insert NaN values for missing timestamps
-    # data.index.name = 'timestamp'  # ensure index remains labeled as 'timestamp'
-
-    # # interpolate missing values and make the timestamp column a normal column again
-    # data = data.interpolate(method='linear', limit_direction='both').reset_index()
-
-
-    cleaned_data = data
-    
-    return cleaned_data
-
 
 # function to convert quaternions into Euler angles
 def quaternion_to_euler(w, x, y, z):
     """
     convert quaternion (w, x, y, z) to Euler angles (roll, pitch, yaw)
+    currently not used
     """
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + y * y)
@@ -108,6 +53,7 @@ def generate_state_action_sequences(data, sequence_length, output_size):
     generate sequences of state-action pairs
     the first element in a sequence represents the earliest timestep in the sequence,
     the last element in a sequence represents the most recent timestep in the sequence.
+    currently not used
     """
     # State: positions and orientations
     data['roll'], data['pitch'], data['yaw'] = zip(*data.apply(lambda row: quaternion_to_euler(row['orientation_w'],
@@ -137,7 +83,7 @@ def generate_feature_target_sequences(data, sequence_length, output_size):
     the last element in a sequence represents the most recent timestep in the sequence.
     """
     # features
-    features = data[['x', 'y', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w', 'linear_velocity_x', 'angular_velocity_z']].values
+    features = data[['x', 'y', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w']].values
 
     # targets
     targets = data[['x', 'y', 'orientation_x', 'orientation_y', 'orientation_z', 'orientation_w']].values
@@ -225,11 +171,7 @@ def preprocess_data (input_file, output_directory, save_as_pt=False, timestep_in
     """
     
     raw_data = load_data(input_file, delimiter=",", decimal=".")
-    cleaned_data = clean_data(raw_data, timestep_interval=timestep_interval)
-    # states, actions = generate_state_action_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
-    # train_states, val_states, test_states, train_actions, val_actions, test_actions = split_data(states, actions, val_size=val_size, test_size=test_size)
-    # save_data(train_states, val_states, test_states, train_actions, val_actions, test_actions, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
-    features, targets = generate_feature_target_sequences(cleaned_data, sequence_length=sequence_length, output_size=output_size)
+    features, targets = generate_feature_target_sequences(raw_data, sequence_length=sequence_length, output_size=output_size)
     train_features, val_features, test_features, train_targets, val_targets, test_targets = split_data(features, targets, val_size=val_size, test_size=test_size)
     save_data(train_features, val_features, test_features, train_targets, val_targets, test_targets, output_directory, save_as_pt=save_as_pt, delimiter=",", decimal=",")
 
