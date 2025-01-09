@@ -55,3 +55,51 @@ The **Position Logger** is a custom ROS node (`position_logger.py`) that logs od
 
 4. **Rounding**
    - Rounds all numerical values to three decimal places for cleaner and more compact logs.
+
+## **LSTM Model**
+#### **Architecture & Training Params**
+``` mermaid
+%%{init: {'theme': 'dark'}}%%
+graph LR
+    subgraph input[Input]
+        direction TB
+        I[Input State Vector] --> F[x, y, qx, qy, qz, qw]
+    end
+    subgraph lstm[LSTM Stack]
+        direction TB
+        L1[LSTM Layer 1] --> D1[Dropout 0.2]
+        D1 --> L2[LSTM Layer 2]
+        L2 --> D2[Dropout 0.2]
+        D2 --> L3[LSTM Layer 3]
+    end
+    subgraph fc[Fully Connected]
+        direction TB
+        FC1[Linear 128] --> R1[ReLU]
+        R1 --> DR1[Dropout 0.2]
+        DR1 --> FC2[Linear 64]
+        FC2 --> R2[ReLU]
+        R2 --> DR2[Dropout 0.2]
+        DR2 --> FC3[Linear 6]
+    end
+    subgraph out[Output]
+        direction TB
+        O[Predicted Next State] --> P[x, y, qx, qy, qz, qw]
+    end
+    input --> lstm
+    lstm --> fc
+    fc --> out
+    subgraph params[Model Parameters]
+        direction TB
+        P1[Hidden: 128] --- P2[LSTM Layers: 3]
+        P2 --- P3[Dropout: 0.2] --- P4[Batch: 64]
+        P4 --- P5[LR: 0.001]
+    end
+```
+#### **Why LSTM**? 
+
+- Maintain long-term memory through cell state, ideal for tracking robot motion patterns
+- Selective information flow via gates prevents vanishing/exploding gradients
+- Better handle temporal dependencies compared to standard RNNs
+- Can forget irrelevant information while retaining crucial past states
+- Naturally suited for variable-length sequences in trajectory prediction
+- Parallel processing of sequential data through gates improves training efficiency
