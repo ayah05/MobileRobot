@@ -22,10 +22,16 @@
     </node>
 
     <!-- Pattern Drive -->
-   <node pkg="project1" type="pattern_driver.py" name="pattern_driver" output="screen" />
- 
+<!--    <node pkg="project1" type="pattern_driver.py" name="pattern_driver" output="screen" /> -->
+
     <!-- Node for the path follower -->
-    <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">   
- 	 <param name="routes" value="[[[1.0, 1.0]]]" /> 
+   <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">
+        <param name="routes" value="[[[1.0, 1.0]]]" />
+   </node>
+
+   <node pkg="project1" type="lstm_predictor.py" name="lstm_predictor" output="screen">
+        <param name="robot_name" value="mir" />
+        <param name="output_file" value="$(find project1)/prediction_data/predictions.csv" />
+        <param name="model_file" value="$(find project1)/best_model.pt" />
    </node>
 </launch>
