@@ -1,5 +1,7 @@
 # Project 1: Learning the Kinematic Model of a Mobile Robot
 
+Report in report.md
+
 # Setup Docker using FHTW Docker Container
 ## Initial Setup
 - [Docker Container Link](https://github.com/TW-Robotics/Docker-ROS/tree/master)
