@@ -201,3 +201,7 @@ test_size : float, optional
 """
 ```
 You can save the generated sequence files either in PyTorch (.pt) or CSV format.
+
+For this part of the code to run it is important to install torch using this command:
+````bash
+  pip install torch
