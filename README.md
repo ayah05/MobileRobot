@@ -201,3 +201,4 @@ test_size : float, optional
 """
 ```
 You can save the generated sequence files either in PyTorch (.pt) or CSV format.
+In order to be able to run the lstm_prediction.py file you need to install torch with the following command: `pip install torch`.
