@@ -103,3 +103,30 @@ graph LR
 - Can forget irrelevant information while retaining crucial past states
 - Naturally suited for variable-length sequences in trajectory prediction
 - Parallel processing of sequential data through gates improves training efficiency
+
+
+## Evaluation
+
+The kinematic model for the MIR 100 robot was evaluated using positional and orientation errors, as well as trajectory comparisons.
+
+![Evaluation Plot](evaluation_plot.png)
+
+### Quantitative Metrics for one Trajectory
+- **Position Error**:
+  - Mean Absolute Error (MAE): **1.2943 meters**
+  - Root Mean Squared Error (RMSE): **1.5964 meters**
+- **Orientation Error**:
+  - Mean Absolute Error (MAE): **2.6769 radians**
+  - Root Mean Squared Error (RMSE): **2.6926 radians**
+
+### Observations
+1. **Error Analysis**:
+   - Position and orientation errors show spikes during sharp turns and complex navigation sections but remain within acceptable limits in most cases.
+
+
+2. **Trajectory Comparison**:
+   - Some Dropouts in the logging increase the error, when data is only sparsely provided.
+   - Once the Trajectory is of path it doesnt catch up but one can see that it follows the same path but with an offset
+
+### Conclusion
+The model performs well at high loggging rates, demonstrating its ability to accurately predict robot motion in dynamic environments. However, future improvements could focus on handling the data collection.
