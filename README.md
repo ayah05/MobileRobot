@@ -48,6 +48,7 @@ gazebo --version
 - To download the required packages for the robot run:
 ```
 sudo apt install ros-noetic-mir-robot
+pip install torch torchvision
 ```
 - Copy the contents of the launch files and the bash script from this repository to `catkin_ws/src/project1/launch` via vim or however you want to.
 
