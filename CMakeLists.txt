@@ -165,6 +165,9 @@ include_directories(
    scripts/position_logger.py
    scripts/pattern_driver.py
    scripts/path_follower.py
+   scripts/publish_path.py
+   scripts/validation_comparison.py
+   scripts/lstm_predictor.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

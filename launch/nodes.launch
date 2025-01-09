@@ -4,11 +4,12 @@
         <param name="unpause" value="true" />
     </node> -->
 
-    <!-- Localization -->
+    <!-- Localization    
     <include file="$(find mir_navigation)/launch/amcl.launch">
         <arg name="initial_pose_x" value="10.0" />
         <arg name="initial_pose_y" value="10.0" />
-    </include>
+    </include> -->
+
 
     <!-- Navigation -->
     <include file="$(find mir_navigation)/launch/start_planner.launch">
@@ -22,16 +23,17 @@
     </node>
 
     <!-- Pattern Drive -->
-<!--    <node pkg="project1" type="pattern_driver.py" name="pattern_driver" output="screen" /> -->
-
+   <node pkg="project1" type="pattern_driver.py" name="pattern_driver" output="screen" />
+ 
     <!-- Node for the path follower -->
-   <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">
-        <param name="routes" value="[[[1.0, 1.0]]]" />
+    <node pkg="project1" type="path_follower.py" name="path_follower" output="screen">   
+ 	 <param name="routes" value="[[[1.0, 1.0]]]" /> 
    </node>
 
    <node pkg="project1" type="lstm_predictor.py" name="lstm_predictor" output="screen">
         <param name="robot_name" value="mir" />
         <param name="output_file" value="$(find project1)/prediction_data/predictions.csv" />
-        <param name="model_file" value="$(find project1)/best_model.pt" />
+        <param name="model_file" value="$(find project1)/checkpoints/best_model.pt" />
    </node>
+  <node pkg="project1" type="publish_path.py" name="model_quaternion_visualizer" output="screen" />
 </launch>
