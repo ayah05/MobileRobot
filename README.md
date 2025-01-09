@@ -49,26 +49,15 @@ gazebo --version
 ```
 sudo apt install ros-noetic-mir-robot
 ```
-- Copy the contents of `full_simulation.launch` file from this repository to `catkin_ws/src/project1/launch` via vim or however you want to:
-```
-vim full_simulation.launch
-```
+- Copy the contents of the launch files and the bash script from this repository to `catkin_ws/src/project1/launch` via vim or however you want to.
 
---> paste the new contents into the file
---> now click (Esc+P) and then Esc again and then write `:wq` to save and quit the file
-
--  Copy the `position_logger.py` file from this repository to `catkin_ws/src/project1/src`
+- Copy the `position_logger.py` file from this repository to `catkin_ws/src/project1/scripts`
+  
+- To start the application redirect to `catkin_ws/src/project1/launch` and run : 
 ```
-- Now we need to run inside of one terminal inside of the docker container the following cmd: 
-```
-roscore
-```
-- Inside of another terminal, also inside of the docker container, run:
-```
-roslaunch project1 full_simulation.launch 
+./start_simulation.sh
 ```
 - Now inside of the Gazebo Window (at the bottom), you need to start the simulation and then open the rViz Window to see where the robot is positioned and open the Robot Steering Window to move the robot.
-```
 
 
 # Setup Docker from Scratch
@@ -157,25 +146,15 @@ gazebo --version
 ```
 sudo apt install ros-noetic-mir-robot
 ```
-- **Option 1**: the content of full_simulation.launch on the gazebo branch on github into a file by redirecting to `CATKINWS/src/project1/launch` and then running:
+- **Option 1**: the content of launch files and the bash script can be found on the main branch on github in the `/launch` directory. In order to run the script redirect to `/CATKINWS/src/project1/launch` and run:
 ```
-vim full_simulation.launch
+./start_simulation.sh
 ```
---> now click (Esc+P) and then Esc again and then write `:wq` to save and quit the file
-
-- **Option 2**: download the file from the github repo copy it with `docker cp` into the stated dir --> redirect to where the file is locally and then run:
-```
-docker cp full_simulation.launch mirRobot:/CATKINWS/src/project1/launch
-```
-- Now we need to run inside of one terminal inside of the docker container the following cmd: 
-```
-roscore
-```
-- Inside of another terminal, also inside of the docker container, run:
-```
-roslaunch project1 full_simulation.launch 
-```
-- Now inside of the Gazebo Window (at the bottom), you need to start the simulation and then open the rViz Window to see where the robot is positioned and open the Robot Steering Window to move the robot.
+- Now inside of the Gazebo Window (at the bottom), you need to start the simulation and then open the rViz Window to see where the robot is positioned. Afterwards you can open another terminal and set one route after the other so the robot moves to different positions. This can be done using the following command:
+```bash
+rosparam set /path_follower/routes "[[[19.0, 1.0]]]"
+rosrun project1 path_follower.py
+````
 
 # Ingest Robot Motion Data and Generate Sequences for LSTM model
 preprocessing.py offers a function **preprocess_data** that imports data from an input file and generates three output files that contain data sequences to be used by an LSTM model for training, validation, and test. The input file contains x, y, orientation_x, orientation_y, orientation_z and orientation_w.
